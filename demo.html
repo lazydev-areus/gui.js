@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUI.js XSS Security Test Demo</title>
+</head>
+<body>
+    <h1>GUI.js XSS Security Test Demo</h1>
+    <p><strong>XSS Test:</strong> If an alert box appears after clicking unsafe buttons, XSS is not blocked. Safe buttons should not alert.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <button onclick="GUI.toast('Basic toast')">Basic Toast</button>
+        <button onclick="GUI.toast.success('Success message')">Success Toast</button>
+        <button onclick="GUI.toast.error('Error message')">Error Toast</button>
+        <button onclick="GUI.toast.warning('Warning message')">Warning Toast</button>
+        <button onclick="GUI.toast.info('Info message')">Info Toast</button>
+        <button onclick="GUI.toast('Persistent toast', { duration: 0 })">Persistent Toast</button>
+        <button onclick="GUI.toast('No close button', { closable: false })">No Close</button>
+        <button onclick="GUI.toast('Click me!', { onClick: () => alert('Clicked!') })">With onClick</button>
+        <button onclick="GUI.toast('Grow progress', { progressType: 'grow' })">Grow Progress</button>
+        <button onclick="GUI.toast('<img src=x onerror=alert(1)>')">Unsafe HTML Toast (should be blocked)</button>
+        <button onclick="GUI.toast('<img src=x onerror=alert(1)>', {allowHTML: true})">Safe HTML Toast (will alert)</button>
+        <button onclick="GUI.toast('Click to copy this message', { copyOnClick: true })">Copy Toast</button>
+        <button onclick="GUI.toast('Message with action', { action: { text: 'Undo', onClick: () => GUI.toast('Undone!') } })">Toast with Action</button>
+        <button onclick="GUI.toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), { loading: 'Processing...', success: 'Done!' })">Promise Success</button>
+        <button onclick="GUI.toast.promise(new Promise((_, reject) => setTimeout(reject, 2000)), { loading: 'Processing...', error: 'Failed!' })">Promise Error</button>
+        <button onclick="GUI.toast.dismissAll()">Dismiss All</button>
+        <button onclick="GUI.toast.config({ position: 'top-left' })">Position: Top-Left</button>
+        <button onclick="GUI.toast.config({ position: 'bottom-right' })">Position: Bottom-Right</button>
+        <button onclick="GUI.toast.config({ theme: 'dark' })">Dark Theme</button>
+        <button onclick="GUI.toast.config({ theme: 'light' })">Light Theme</button>
+        <button onclick="GUI.toast.config({ duration: 1000 })">Duration: 1s</button>
+        <button onclick="GUI.toast.config({ maxVisible: 3 })">Max Visible: 3</button>
+        <button onclick="GUI.toast.config({ maxVisible: 2 })">Max Visible: 2</button>
+    </div>
+
+    <h2>Theme Switcher</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <button onclick="GUI.setTheme('light')">Switch to Light Theme</button>
+        <button onclick="GUI.setTheme('dark')">Switch to Dark Theme</button>
+    </div>
+
+    <h2>Modal Demo</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <button onclick="GUI.modal.alert('This is an alert message')">Alert</button>
+        <button onclick="GUI.modal.alert('This is an alert with title', 'My Title')">Alert with Title</button>
+        <button onclick="GUI.modal.confirm('Are you sure?').then(result => GUI.toast(result ? 'Confirmed' : 'Cancelled'))">Confirm</button>
+        <button onclick="GUI.modal.confirm('Delete this item?', 'Confirm Delete').then(result => GUI.toast(result ? 'Deleted' : 'Cancelled'))">Confirm with Title</button>
+        <button onclick="GUI.modal.prompt('Enter your name:').then(result => GUI.toast(result ? 'Hello ' + result : 'Cancelled'))">Prompt</button>
+        <button onclick="GUI.modal.prompt('Enter your age:', '25').then(result => GUI.toast(result ? 'Age: ' + result : 'Cancelled'))">Prompt with Default</button>
+        <button onclick="GUI.modal.show({ title: 'Custom Modal', content: 'This is custom content with <strong>HTML</strong>.', allowHTML: true, buttons: [{ text: 'Close', action: () => {}, primary: true }] })">Custom Modal</button>
+        <button onclick="GUI.modal.show({ title: 'Modal with Buttons', content: 'Choose an option:', buttons: [{ text: 'Option 1', action: () => GUI.toast('Option 1 selected') }, { text: 'Option 2', action: () => GUI.toast('Option 2 selected'), primary: true }] })">Modal with Multiple Buttons</button>
+        <button onclick="GUI.modal.alert('<img src=x onerror=alert(1)>')">Unsafe Modal Alert (should be blocked)</button>
+        <button onclick="GUI.modal.show({title: 'XSS Modal', content: '<img src=x onerror=alert(1)>', allowHTML: true, buttons: [{text: 'OK'}]})">Safe Modal with HTML (will alert)</button>
+        <button onclick="GUI.modal.show({title: '<img src=x onerror=alert(1)>', content: 'Test XSS in title'})">Unsafe Title Modal (should be blocked)</button>
+        <button onclick="GUI.modal.show({ title: 'Form with Select', form: [{ label: 'Choose', name: 'choice', type: 'select', options: [{ label: 'Option 1', value: '1' }, { label: 'Option 2', value: '2' }] }], buttons: [{ text: 'Submit', primary: true }] }).then(data => GUI.toast(data ? 'Selected: ' + data.choice : 'Cancelled'))">Form with Select</button>
+        <button onclick="GUI.modal.show({ title: 'Form with Checkbox', form: [{ label: 'Agree', name: 'agree', type: 'checkbox', checked: false }], buttons: [{ text: 'Submit', primary: true }] }).then(data => GUI.toast(data ? 'Agreed: ' + data.agree : 'Cancelled'))">Form with Checkbox</button>
+        <button onclick="openNestedModals()">Nested Modals</button>
+        <button onclick="simulateUpload()">Simulate Upload</button>
+    </div>
+
+    <script>
+        function openNestedModals() {
+            GUI.modal.show({
+                title: 'First Modal',
+                content: 'This is the first modal. Click below to open another.',
+                buttons: [
+                    { text: 'Open Second', action: () => { GUI.modal.show({ title: 'Second Modal', content: 'This is the second modal on top.', buttons: [{ text: 'Close', primary: true }] }); return false; } },
+                    { text: 'Close', primary: true }
+                ]
+            });
+        }
+        function simulateUpload() {
+            const id = GUI.toast('Uploading file...', { duration: 0 });
+            setTimeout(() => {
+                GUI.toast.update(id, { message: 'Upload complete!', type: 'success' });
+            }, 3000);
+        }
+    </script>
+    <script src="gui.js"></script>
+</body>
+</html>
