@@ -6,6 +6,23 @@ GUI.js adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.0] — 2026
+
+### Added
+- `GUI.toast.rich()` — rich notification toast with title and description
+- `GUI.registerTheme()` — register and use fully custom themes
+- `GUI.toast.setProgress()` — manual progress bar control
+- `GUI.modal.drawer()` — slide-in side panel for settings and filters
+
+### Changed
+- Modal entrance animation refined with subtle scale transform
+- Modal buttons now have ripple effect on click
+- Demo page redesigned as a proper landing/showcase page
+
+### Improved
+- Accessibility: correct `role` and `aria-live` per toast severity
+- Reduced motion support via `prefers-reduced-motion` media query
+
 ## [1.6.0] — 2026
 
 ### Added
@@ -85,6 +102,7 @@ GUI.js adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+[1.7.0]: https://github.com/lazydev-areus/gui.js/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/lazydev-areus/gui.js/compare/v1.5.1...v1.6.0
 [1.5.1]: https://github.com/lazydev-areus/gui.js/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/lazydev-areus/gui.js/compare/v1.2.1...v1.5.0
