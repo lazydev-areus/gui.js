@@ -46,6 +46,22 @@
     }
   };
 
+  const REQUIRED_THEME_KEYS = [
+    'toastBg',
+    'toastColor',
+    'toastBoxShadow',
+    'toastSuccessIcon',
+    'toastErrorIcon',
+    'toastWarningIcon',
+    'toastInfoIcon',
+    'modalBg',
+    'modalColor',
+    'modalBackdrop',
+    'modalBoxShadow',
+    'modalBorder',
+    'glassmorphism'
+  ];
+
   // Sanitize HTML
   function _sanitize(html) {
     const parser = new DOMParser();
@@ -172,7 +188,7 @@
       background: var(--gui-toast-bg);
       color: var(--gui-toast-color);
       border-radius: var(--gui-toast-border-radius);
-      box-shadow: var(--gui-toast-shadow);
+      box-shadow: var(--gui-toast-box-shadow);
       backdrop-filter: blur(8px);
       min-width: var(--gui-toast-min-width);
       max-width: calc(100vw - 32px);
@@ -199,6 +215,9 @@
     .gui-toast-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--gui-toast-progress-bg); width: 100%; }
     .gui-toast-progress-bar { height: 100%; background: currentColor; width: 100%; transition: width linear; }
     .gui-toast-progress-bar.grow { width: 0%; }
+    .gui-toast-rich { display: flex; flex-direction: column; gap: 2px; }
+    .gui-toast-rich-title { font-weight: 600; }
+    .gui-toast-rich-description { opacity: 0.7; font-size: 0.875em; }
     .gui-toast.enter.active { transform: translateX(0) translateY(0); opacity: 1; }
     .gui-toast.exit.active { transform: translateX(-100%) translateY(0); opacity: 0; }
     .gui-toast.shift { transform: translateX(0) translateY(-60px); }
@@ -219,7 +238,7 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) translateY(20px);
+      transform: translate(-50%, -50%) translateY(20px) scale(0.96);
       background: var(--gui-modal-bg);
       color: var(--gui-modal-color);
       border-radius: var(--gui-modal-border-radius);
@@ -236,7 +255,7 @@
       pointer-events: auto;
       padding-bottom: calc(24px + env(safe-area-inset-bottom));
     }
-    .gui-modal.active { transform: translate(-50%, -50%) translateY(0); opacity: 1; }
+    .gui-modal.active { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 1; }
     .gui-modal-header { margin-bottom: 16px; border-bottom: 1px solid var(--gui-modal-border); padding-bottom: 16px; }
     .gui-modal-title { font-size: 1.25rem; font-weight: bold; margin: 0; }
     .gui-modal-body { margin-bottom: 24px; }
@@ -337,6 +356,62 @@
         max-width: none;
         left: 16px;
         right: 16px;
+      }
+    }
+
+    @keyframes gui-ripple {
+      to { transform: scale(2); opacity: 0; }
+    }
+
+    .gui-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 380px;
+      max-width: 90vw;
+      height: 100%;
+      background: var(--gui-modal-bg);
+      color: var(--gui-modal-color);
+      box-shadow: var(--gui-modal-shadow);
+      backdrop-filter: blur(8px);
+      z-index: 1000001;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow-y: auto;
+      pointer-events: auto;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+    .gui-drawer.left { left: 0; right: auto; transform: translateX(-100%); }
+    .gui-drawer.active { transform: translateX(0); }
+    .gui-drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--gui-modal-border);
+      gap: 12px;
+    }
+    .gui-drawer-body { flex: 1; }
+    .gui-drawer-footer {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--gui-modal-border);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .gui-toast,
+      .gui-modal,
+      .gui-modal-backdrop,
+      .gui-drawer {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
       }
     }
   `;
@@ -477,8 +552,13 @@
     const toast = document.createElement('div');
     toast.className = 'gui-toast ' + (type || '') + ' enter';
     toast.id = 'gui-toast-' + id;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'polite');
+    if (type === 'error' || type === 'warning') {
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+    } else {
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+    }
     children.forEach(function(child) { toast.appendChild(child); });
     if (opts.allowHTML) {
       messageEl.innerHTML = _sanitize(message);
@@ -574,6 +654,100 @@
     return id;
   }
 
+  function createRichToast(options) {
+    const opts = Object.assign({
+      title: '',
+      description: '',
+      icon: '',
+      type: 'info',
+      duration: state.config.duration,
+      closable: true,
+      pauseOnHover: true,
+      progressType: 'shrink',
+      action: null,
+      allowHTML: false
+    }, options);
+    const id = ++toastId;
+
+    const children = [];
+
+    const iconEl = document.createElement('div');
+    iconEl.className = 'gui-toast-icon';
+    if (opts.icon) {
+      iconEl.textContent = String(opts.icon);
+    } else if (opts.type) {
+      iconEl.innerHTML = icons[opts.type] || '';
+    }
+    children.push(iconEl);
+
+    const messageEl = document.createElement('div');
+    messageEl.className = 'gui-toast-message gui-toast-rich';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'gui-toast-rich-title';
+    titleEl.textContent = opts.title;
+    messageEl.appendChild(titleEl);
+    if (opts.description) {
+      const descEl = document.createElement('div');
+      descEl.className = 'gui-toast-rich-description';
+      if (opts.allowHTML) {
+        descEl.innerHTML = _sanitize(String(opts.description));
+      } else {
+        descEl.textContent = String(opts.description);
+      }
+      messageEl.appendChild(descEl);
+    }
+    children.push(messageEl);
+
+    if (opts.action) {
+      const actionBtn = document.createElement('button');
+      actionBtn.className = 'gui-toast-action';
+      actionBtn.textContent = opts.action.text;
+      children.push(actionBtn);
+    }
+    if (opts.closable) {
+      const closeEl = document.createElement('div');
+      closeEl.className = 'gui-toast-close';
+      closeEl.innerHTML = icons.close;
+      children.push(closeEl);
+    }
+    if (opts.duration > 0) {
+      const progress = document.createElement('div');
+      progress.className = 'gui-toast-progress';
+      const bar = document.createElement('div');
+      bar.className = 'gui-toast-progress-bar ' + opts.progressType;
+      progress.appendChild(bar);
+      children.push(progress);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'gui-toast ' + (opts.type || '') + ' enter';
+    toast.id = 'gui-toast-' + id;
+    if (opts.type === 'error' || opts.type === 'warning') {
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+    } else {
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+    }
+    children.forEach(function(child) { toast.appendChild(child); });
+
+    if (opts.pauseOnHover && opts.duration > 0) {
+      toast.onmouseenter = function() { pauseToast(id); };
+      toast.onmouseleave = function() { resumeToast(id); };
+    }
+
+    getContainer().appendChild(toast);
+    setTimeout(function() { toast.classList.add('active'); }, 10);
+    const t = { id: id, element: toast, duration: opts.duration, paused: false, startTime: Date.now(), timer: null, progressType: opts.progressType, visible: false, opts: opts };
+    toasts.push(t);
+    if (opts.duration > 0) {
+      animateProgress(t);
+      scheduleDismiss(t, opts.duration);
+    }
+    showToasts();
+    return id;
+  }
+
   // Show toasts with Sonner-style stacking
   function showToasts() {
     const notVisible = toasts.filter(t => !t.visible);
@@ -621,6 +795,155 @@
       // Re-apply stacking to remaining
       applyStacking();
     }, 300);
+  }
+
+  function showDrawer(options) {
+    const opts = Object.assign({
+      title: '',
+      content: '',
+      position: 'right',
+      width: '380px',
+      buttons: [],
+      closable: true,
+      allowHTML: false
+    }, options);
+
+    const id = ++modalId;
+    const zIndex = 1000000 + modalStack.length * 2;
+
+    const modalBackdrop = document.createElement('div');
+    modalBackdrop.className = 'gui-modal-backdrop';
+    modalBackdrop.style.zIndex = zIndex;
+    document.body.appendChild(modalBackdrop);
+
+    const drawer = document.createElement('div');
+    drawer.className = 'gui-drawer' + (opts.position === 'left' ? ' left' : '');
+    drawer.style.zIndex = zIndex + 1;
+    drawer.style.width = opts.width || '380px';
+    drawer.setAttribute('role', 'dialog');
+    drawer.setAttribute('aria-modal', 'true');
+
+    const header = document.createElement('div');
+    header.className = 'gui-drawer-header';
+    if (opts.title) {
+      const titleEl = document.createElement('h2');
+      titleEl.className = 'gui-modal-title';
+      titleEl.id = 'gui-drawer-title-' + id;
+      titleEl.textContent = opts.title;
+      drawer.setAttribute('aria-labelledby', titleEl.id);
+      header.appendChild(titleEl);
+    }
+    if (opts.closable) {
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'gui-modal-button';
+      closeBtn.textContent = 'Close';
+      closeBtn.onclick = function() { closeModal(id); };
+      header.appendChild(closeBtn);
+    }
+    drawer.appendChild(header);
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'gui-drawer-body';
+    if (typeof opts.content === 'string') {
+      if (opts.allowHTML) {
+        bodyEl.innerHTML = _sanitize(opts.content);
+      } else {
+        bodyEl.textContent = opts.content;
+      }
+    } else if (opts.content) {
+      bodyEl.appendChild(opts.content);
+    }
+    drawer.appendChild(bodyEl);
+
+    const footer = document.createElement('div');
+    footer.className = 'gui-drawer-footer';
+    opts.buttons.forEach(function(btn) {
+      const button = document.createElement('button');
+      button.className = 'gui-modal-button' + (btn.primary ? ' primary' : '');
+      button.textContent = btn.text;
+      button.onclick = async function(e) {
+        const ripple = document.createElement('span');
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.cssText = `
+          position: absolute;
+          width: ${size}px;
+          height: ${size}px;
+          left: ${e.clientX - rect.left - size / 2}px;
+          top: ${e.clientY - rect.top - size / 2}px;
+          background: rgba(255,255,255,0.3);
+          border-radius: 50%;
+          transform: scale(0);
+          animation: gui-ripple 0.4s ease-out;
+          pointer-events: none;
+        `;
+        button.style.position = 'relative';
+        button.style.overflow = 'hidden';
+        button.appendChild(ripple);
+        setTimeout(function() { ripple.remove(); }, 400);
+
+        if (btn.action) {
+          let result = btn.action();
+          if (result instanceof Promise) {
+            button.classList.add('loading');
+            button.style.pointerEvents = 'none';
+            try {
+              result = await result;
+            } finally {
+              button.classList.remove('loading');
+              button.style.pointerEvents = '';
+            }
+          }
+          if (result !== false) {
+            closeModal(id);
+          }
+        } else {
+          closeModal(id);
+        }
+      };
+      footer.appendChild(button);
+    });
+    if (opts.buttons && opts.buttons.length) {
+      drawer.appendChild(footer);
+    }
+
+    modalStack.forEach(function(m) {
+      m.element.style.opacity = '0.6';
+      m.element.style.pointerEvents = 'none';
+    });
+    drawer.style.opacity = '1';
+    drawer.style.pointerEvents = 'auto';
+
+    document.body.appendChild(drawer);
+    if (modalStack.length === 0) {
+      document.body.style.overflow = 'hidden';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Escape' && opts.closable && modalStack[modalStack.length - 1].id === id) {
+        closeModal(id);
+      }
+    }
+    document.addEventListener('keydown', handleKey);
+    if (opts.closable) {
+      modalBackdrop.onclick = function() { closeModal(id); };
+    }
+
+    modalStack.push({
+      id: id,
+      element: drawer,
+      backdrop: modalBackdrop,
+      handleKey: handleKey,
+      closable: opts.closable,
+      form: null
+    });
+
+    setTimeout(function() {
+      modalBackdrop.classList.add('active');
+      drawer.classList.add('active');
+    }, 10);
+
+    return id;
   }
 
   // Schedule dismiss
@@ -803,7 +1126,26 @@
       const button = document.createElement('button');
       button.className = 'gui-modal-button' + (btn.primary ? ' primary' : '');
       button.textContent = btn.text;
-      button.onclick = async function() {
+      button.onclick = async function(e) {
+        const ripple = document.createElement('span');
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.cssText = `
+          position: absolute;
+          width: ${size}px;
+          height: ${size}px;
+          left: ${e.clientX - rect.left - size / 2}px;
+          top: ${e.clientY - rect.top - size / 2}px;
+          background: rgba(255,255,255,0.3);
+          border-radius: 50%;
+          transform: scale(0);
+          animation: gui-ripple 0.4s ease-out;
+          pointer-events: none;
+        `;
+        button.style.position = 'relative';
+        button.style.overflow = 'hidden';
+        button.appendChild(ripple);
+        setTimeout(function() { ripple.remove(); }, 400);
         if (btn.action) {
           let result = btn.action();
           if (result instanceof Promise) {
@@ -960,6 +1302,16 @@
 
   // GUI
   const GUI = {};
+  GUI.registerTheme = function(name, theme) {
+    if (!name || typeof name !== 'string') return;
+    if (!theme || typeof theme !== 'object') return;
+    const missing = REQUIRED_THEME_KEYS.filter(function(k) { return theme[k] === undefined; });
+    if (missing.length) {
+      console.warn('GUI.registerTheme: missing theme keys:', missing);
+      return;
+    }
+    state.themes[name] = Object.assign({}, theme);
+  };
   GUI.setTheme = function(theme) {
     if (state.themes[theme]) {
       applyTheme(theme);
@@ -972,6 +1324,27 @@
   GUI.toast.error = function(message, options) { return createToast(message, 'error', options); };
   GUI.toast.warning = function(message, options) { return createToast(message, 'warning', options); };
   GUI.toast.info = function(message, options) { return createToast(message, 'info', options); };
+  GUI.toast.rich = function(options) {
+    return createRichToast(options);
+  };
+  GUI.toast.setProgress = function(id, percent) {
+    const t = toasts.find(function(t) { return t.id === id; });
+    if (!t) return;
+    let progressEl = t.element.querySelector('.gui-toast-progress');
+    if (!progressEl) {
+      progressEl = document.createElement('div');
+      progressEl.className = 'gui-toast-progress';
+      const bar = document.createElement('div');
+      bar.className = 'gui-toast-progress-bar grow';
+      progressEl.appendChild(bar);
+      t.element.appendChild(progressEl);
+    }
+    const bar = progressEl.querySelector('.gui-toast-progress-bar');
+    if (bar) {
+      bar.style.transition = 'width 0.2s ease';
+      bar.style.width = Math.min(100, Math.max(0, percent)) + '%';
+    }
+  };
   GUI.toast.promise = function(promise, messages) {
     const loadingId = createToast(messages.loading || 'Loading...', 'info', { duration: 0 });
     promise.then(function(result) {
@@ -1111,6 +1484,27 @@
         };
       });
       showModal(opts);
+    });
+  };
+  GUI.modal.drawer = function(options) {
+    return new Promise(function(resolve) {
+      const opts = Object.assign({}, options);
+      opts.buttons = opts.buttons || [];
+      opts.buttons.forEach(function(btn) {
+        const originalAction = btn.action;
+        btn.action = async function() {
+          if (originalAction) {
+            const result = await originalAction();
+            if (result !== false) {
+              resolve(true);
+            }
+            return result;
+          }
+          resolve(true);
+          return true;
+        };
+      });
+      showDrawer(opts);
     });
   };
 
