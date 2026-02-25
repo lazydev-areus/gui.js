@@ -3,80 +3,441 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUI.js XSS Security Test Demo</title>
+    <title>GUI.js — Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+        html, body {
+            height: 100%;
+        }
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: linear-gradient(180deg, #0f0f1a, #1a1a2e);
+            color: #e2e8f0;
+        }
+        a { color: #a5b4fc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 20px 64px;
+        }
+
+        header {
+            margin-bottom: 48px;
+            padding: 28px 24px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .logo {
+            font-size: 40px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(99,102,241,0.35);
+            background: rgba(99,102,241,0.15);
+            color: #c7d2fe;
+        }
+        .tagline {
+            margin-top: 12px;
+            color: rgba(226,232,240,0.85);
+            line-height: 1.6;
+            max-width: 70ch;
+        }
+
+        .demo-section {
+            margin-bottom: 48px;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.03);
+        }
+        .demo-section h2 {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6366f1;
+            margin: 0 0 16px;
+        }
+        .subtext {
+            margin: 0 0 16px;
+            color: rgba(226,232,240,0.75);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .demo-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .demo-btn:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+        .demo-btn.primary {
+            background: rgba(99,102,241,0.22);
+            border-color: rgba(99,102,241,0.35);
+        }
+        .demo-btn.primary:hover {
+            background: rgba(99,102,241,0.32);
+            border-color: rgba(99,102,241,0.55);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        @media (min-width: 860px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            color: rgba(226,232,240,0.65);
+            font-size: 13px;
+        }
+
+        .highlight {
+            border: 1px solid rgba(99,102,241,0.25);
+            background: linear-gradient(180deg, rgba(99,102,241,0.12), rgba(99,102,241,0.04));
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .feature {
+            padding: 14px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.03);
+        }
+        .feature .title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .feature .desc {
+            color: rgba(226,232,240,0.75);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        @media (min-width: 860px) {
+            .feature-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>GUI.js XSS Security Test Demo</h1>
-    <p><strong>XSS Test:</strong> If an alert box appears after clicking unsafe buttons, XSS is not blocked. Safe buttons should not alert.</p>
-    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-        <button onclick="GUI.toast('Basic toast')">Basic Toast</button>
-        <button onclick="GUI.toast.success('Success message')">Success Toast</button>
-        <button onclick="GUI.toast.error('Error message')">Error Toast</button>
-        <button onclick="GUI.toast.warning('Warning message')">Warning Toast</button>
-        <button onclick="GUI.toast.info('Info message')">Info Toast</button>
-        <button onclick="GUI.toast('Persistent toast', { duration: 0 })">Persistent Toast</button>
-        <button onclick="GUI.toast('No close button', { closable: false })">No Close</button>
-        <button onclick="GUI.toast('Click me!', { onClick: () => alert('Clicked!') })">With onClick</button>
-        <button onclick="GUI.toast('Grow progress', { progressType: 'grow' })">Grow Progress</button>
-        <button onclick="GUI.toast('<img src=x onerror=alert(1)>')">Unsafe HTML Toast (should be blocked)</button>
-        <button onclick="GUI.toast('<img src=x onerror=alert(1)>', {allowHTML: true})">Safe HTML Toast (will alert)</button>
-        <button onclick="GUI.toast('Click to copy this message', { copyOnClick: true })">Copy Toast</button>
-        <button onclick="GUI.toast('Message with action', { action: { text: 'Undo', onClick: () => GUI.toast('Undone!') } })">Toast with Action</button>
-        <button onclick="GUI.toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), { loading: 'Processing...', success: 'Done!' })">Promise Success</button>
-        <button onclick="GUI.toast.promise(new Promise((_, reject) => setTimeout(reject, 2000)), { loading: 'Processing...', error: 'Failed!' })">Promise Error</button>
-        <button onclick="GUI.toast.dismissAll()">Dismiss All</button>
-        <button onclick="GUI.toast.config({ position: 'top-left' })">Position: Top-Left</button>
-        <button onclick="GUI.toast.config({ position: 'bottom-right' })">Position: Bottom-Right</button>
-        <button onclick="GUI.toast.config({ theme: 'dark' })">Dark Theme</button>
-        <button onclick="GUI.toast.config({ theme: 'light' })">Light Theme</button>
-        <button onclick="GUI.toast.config({ duration: 1000 })">Duration: 1s</button>
-        <button onclick="GUI.toast.config({ maxVisible: 3 })">Max Visible: 3</button>
-        <button onclick="GUI.toast.config({ maxVisible: 2 })">Max Visible: 2</button>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <div class="logo">GUI.js</div>
+                <div class="badge">v1.7.0</div>
+            </div>
+            <p class="tagline">
+                Vanilla JS UI library for toast notifications and modal dialogs — zero dependencies, XSS-safe by default,
+                with themes, rich toasts, and a new drawer modal.
+            </p>
+        </header>
+
+        <section class="demo-section highlight">
+            <h2>New in v1.7</h2>
+            <p class="subtext">Try the new major features introduced in v1.7.0.</p>
+            <div class="feature-list">
+                <div class="feature">
+                    <div class="title">GUI.toast.rich()</div>
+                    <div class="desc">Notification card layout with title + description and optional custom icon.</div>
+                </div>
+                <div class="feature">
+                    <div class="title">GUI.registerTheme()</div>
+                    <div class="desc">Register and switch to fully custom themes (toast + modal + glassmorphism).</div>
+                </div>
+                <div class="feature">
+                    <div class="title">GUI.toast.setProgress()</div>
+                    <div class="desc">Manual progress control (0-100) for uploads and background tasks.</div>
+                </div>
+                <div class="feature">
+                    <div class="title">GUI.modal.drawer()</div>
+                    <div class="desc">Slide-in side panel from left/right, sharing backdrop + close logic.</div>
+                </div>
+            </div>
+
+            <div style="height: 16px;"></div>
+            <div class="btn-row">
+                <button class="demo-btn primary" id="btn-rich-toast">Rich toast example</button>
+                <button class="demo-btn primary" id="btn-progress-toast">Manual progress example</button>
+                <button class="demo-btn primary" id="btn-drawer">Drawer example</button>
+                <button class="demo-btn primary" id="btn-brand-theme">Register + apply brand theme</button>
+            </div>
+        </section>
+
+        <div class="grid">
+            <section class="demo-section">
+                <h2>Toasts</h2>
+                <p class="subtext">Basic usage, types, persistence, actions, promise, and stacking.</p>
+                <div class="btn-row">
+                    <button class="demo-btn" id="btn-toast-basic">Basic toast</button>
+                    <button class="demo-btn" id="btn-toast-success">Success</button>
+                    <button class="demo-btn" id="btn-toast-error">Error</button>
+                    <button class="demo-btn" id="btn-toast-warning">Warning</button>
+                    <button class="demo-btn" id="btn-toast-info">Info</button>
+                    <button class="demo-btn" id="btn-toast-persistent">Persistent</button>
+                    <button class="demo-btn" id="btn-toast-no-close">No close</button>
+                    <button class="demo-btn" id="btn-toast-onclick">With onClick</button>
+                    <button class="demo-btn" id="btn-toast-grow">Grow progress</button>
+                    <button class="demo-btn" id="btn-toast-copy">Copy on click</button>
+                    <button class="demo-btn" id="btn-toast-action">Toast with action</button>
+                    <button class="demo-btn" id="btn-toast-promise-ok">Promise success</button>
+                    <button class="demo-btn" id="btn-toast-promise-fail">Promise error</button>
+                    <button class="demo-btn" id="btn-toast-dismiss">Dismiss all</button>
+                </div>
+            </section>
+
+            <section class="demo-section">
+                <h2>Config & theme</h2>
+                <p class="subtext">Position, duration, max visible, and theme switching.</p>
+                <div class="btn-row">
+                    <button class="demo-btn" id="btn-position-top-left">Position: top-left</button>
+                    <button class="demo-btn" id="btn-position-bottom-right">Position: bottom-right</button>
+                    <button class="demo-btn" id="btn-theme-dark">Theme: dark</button>
+                    <button class="demo-btn" id="btn-theme-light">Theme: light</button>
+                    <button class="demo-btn" id="btn-duration-1s">Duration: 1s</button>
+                    <button class="demo-btn" id="btn-max-3">Max visible: 3</button>
+                    <button class="demo-btn" id="btn-max-2">Max visible: 2</button>
+                </div>
+            </section>
+
+            <section class="demo-section">
+                <h2>Modals</h2>
+                <p class="subtext">Alert, confirm, prompt, custom modal, forms, and nested stacking.</p>
+                <div class="btn-row">
+                    <button class="demo-btn" id="btn-modal-alert">Alert</button>
+                    <button class="demo-btn" id="btn-modal-alert-title">Alert with title</button>
+                    <button class="demo-btn" id="btn-modal-confirm">Confirm</button>
+                    <button class="demo-btn" id="btn-modal-confirm-title">Confirm with title</button>
+                    <button class="demo-btn" id="btn-modal-prompt">Prompt</button>
+                    <button class="demo-btn" id="btn-modal-prompt-default">Prompt with default</button>
+                    <button class="demo-btn" id="btn-modal-custom">Custom modal (allowHTML)</button>
+                    <button class="demo-btn" id="btn-modal-multi">Modal with multiple buttons</button>
+                    <button class="demo-btn" id="btn-modal-form-select">Form with select</button>
+                    <button class="demo-btn" id="btn-modal-form-checkbox">Form with checkbox</button>
+                    <button class="demo-btn" id="btn-modal-nested">Nested modals</button>
+                </div>
+            </section>
+
+            <section class="demo-section">
+                <h2>Security (XSS)</h2>
+                <p class="subtext">
+                    By default, string content is rendered safely. If an alert appears after clicking a “unsafe” button,
+                    then XSS is not blocked.
+                </p>
+                <div class="btn-row">
+                    <button class="demo-btn" id="btn-unsafe-toast">Unsafe HTML toast (should be blocked)</button>
+                    <button class="demo-btn" id="btn-safe-html-toast">Safe HTML toast (allowHTML=true)</button>
+                    <button class="demo-btn" id="btn-unsafe-modal-alert">Unsafe modal alert (should be blocked)</button>
+                    <button class="demo-btn" id="btn-safe-modal-html">Safe modal HTML (allowHTML=true)</button>
+                    <button class="demo-btn" id="btn-unsafe-modal-title">Unsafe title modal (should be blocked)</button>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <div>Built with vanilla JS. Zero dependencies.</div>
+            <div style="margin-top: 8px;">
+                <a href="https://github.com/lazydev-areus/gui.js" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </footer>
     </div>
 
-    <h2>Theme Switcher</h2>
-    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-        <button onclick="GUI.setTheme('light')">Switch to Light Theme</button>
-        <button onclick="GUI.setTheme('dark')">Switch to Dark Theme</button>
-    </div>
-
-    <h2>Modal Demo</h2>
-    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-        <button onclick="GUI.modal.alert('This is an alert message')">Alert</button>
-        <button onclick="GUI.modal.alert('This is an alert with title', 'My Title')">Alert with Title</button>
-        <button onclick="GUI.modal.confirm('Are you sure?').then(result => GUI.toast(result ? 'Confirmed' : 'Cancelled'))">Confirm</button>
-        <button onclick="GUI.modal.confirm('Delete this item?', 'Confirm Delete').then(result => GUI.toast(result ? 'Deleted' : 'Cancelled'))">Confirm with Title</button>
-        <button onclick="GUI.modal.prompt('Enter your name:').then(result => GUI.toast(result ? 'Hello ' + result : 'Cancelled'))">Prompt</button>
-        <button onclick="GUI.modal.prompt('Enter your age:', '25').then(result => GUI.toast(result ? 'Age: ' + result : 'Cancelled'))">Prompt with Default</button>
-        <button onclick="GUI.modal.show({ title: 'Custom Modal', content: 'This is custom content with <strong>HTML</strong>.', allowHTML: true, buttons: [{ text: 'Close', action: () => {}, primary: true }] })">Custom Modal</button>
-        <button onclick="GUI.modal.show({ title: 'Modal with Buttons', content: 'Choose an option:', buttons: [{ text: 'Option 1', action: () => GUI.toast('Option 1 selected') }, { text: 'Option 2', action: () => GUI.toast('Option 2 selected'), primary: true }] })">Modal with Multiple Buttons</button>
-        <button onclick="GUI.modal.alert('<img src=x onerror=alert(1)>')">Unsafe Modal Alert (should be blocked)</button>
-        <button onclick="GUI.modal.show({title: 'XSS Modal', content: '<img src=x onerror=alert(1)>', allowHTML: true, buttons: [{text: 'OK'}]})">Safe Modal with HTML (will alert)</button>
-        <button onclick="GUI.modal.show({title: '<img src=x onerror=alert(1)>', content: 'Test XSS in title'})">Unsafe Title Modal (should be blocked)</button>
-        <button onclick="GUI.modal.show({ title: 'Form with Select', form: [{ label: 'Choose', name: 'choice', type: 'select', options: [{ label: 'Option 1', value: '1' }, { label: 'Option 2', value: '2' }] }], buttons: [{ text: 'Submit', primary: true }] }).then(data => GUI.toast(data ? 'Selected: ' + data.choice : 'Cancelled'))">Form with Select</button>
-        <button onclick="GUI.modal.show({ title: 'Form with Checkbox', form: [{ label: 'Agree', name: 'agree', type: 'checkbox', checked: false }], buttons: [{ text: 'Submit', primary: true }] }).then(data => GUI.toast(data ? 'Agreed: ' + data.agree : 'Cancelled'))">Form with Checkbox</button>
-        <button onclick="openNestedModals()">Nested Modals</button>
-        <button onclick="simulateUpload()">Simulate Upload</button>
-    </div>
-
+    <script src="gui.js"></script>
     <script>
+        function $(id) {
+            return document.getElementById(id);
+        }
+
         function openNestedModals() {
             GUI.modal.show({
                 title: 'First Modal',
                 content: 'This is the first modal. Click below to open another.',
                 buttons: [
-                    { text: 'Open Second', action: () => { GUI.modal.show({ title: 'Second Modal', content: 'This is the second modal on top.', buttons: [{ text: 'Close', primary: true }] }); return false; } },
+                    {
+                        text: 'Open Second',
+                        action: () => {
+                            GUI.modal.show({
+                                title: 'Second Modal',
+                                content: 'This is the second modal on top.',
+                                buttons: [{ text: 'Close', primary: true }]
+                            });
+                            return false;
+                        }
+                    },
                     { text: 'Close', primary: true }
                 ]
             });
         }
-        function simulateUpload() {
-            const id = GUI.toast('Uploading file...', { duration: 0 });
-            setTimeout(() => {
-                GUI.toast.update(id, { message: 'Upload complete!', type: 'success' });
-            }, 3000);
+
+        function simulateManualProgress() {
+            const id = GUI.toast('Uploading…', { duration: 0, progressType: 'grow' });
+            let p = 0;
+            const timer = setInterval(() => {
+                p += 8;
+                GUI.toast.setProgress(id, p);
+                if (p >= 100) {
+                    clearInterval(timer);
+                    GUI.toast.update(id, { message: 'Upload complete!', type: 'success', duration: 2000 });
+                }
+            }, 220);
         }
+
+        function registerAndApplyBrandTheme() {
+            GUI.registerTheme('brand', {
+                toastBg: 'rgba(99, 102, 241, 0.95)',
+                toastColor: '#ffffff',
+                toastBoxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+                toastSuccessIcon: '#a5f3fc',
+                toastErrorIcon: '#fca5a5',
+                toastWarningIcon: '#fde68a',
+                toastInfoIcon: '#c7d2fe',
+                modalBg: 'rgba(79, 70, 229, 0.95)',
+                modalColor: '#ffffff',
+                modalBackdrop: 'rgba(49, 46, 129, 0.6)',
+                modalBoxShadow: '0 20px 40px rgba(99,102,241,0.3)',
+                modalBorder: 'rgba(255,255,255,0.1)',
+                glassmorphism: true
+            });
+            GUI.setTheme('brand');
+            GUI.toast.rich({
+                title: 'Brand theme enabled',
+                description: 'Custom toast + modal tokens applied',
+                icon: '✨',
+                type: 'success',
+                duration: 3000
+            });
+        }
+
+        // New in v1.7
+        $('btn-rich-toast').onclick = () => {
+            GUI.toast.rich({
+                title: 'File uploaded',
+                description: 'photo.jpg • 2.4 MB',
+                icon: '📁',
+                type: 'success',
+                duration: 5000,
+                closable: true,
+                action: {
+                    text: 'View',
+                    onClick: () => GUI.toast('Opening…')
+                }
+            });
+        };
+        $('btn-progress-toast').onclick = () => simulateManualProgress();
+        $('btn-drawer').onclick = () => {
+            GUI.modal.drawer({
+                title: 'Filters',
+                content: 'Filter content here',
+                position: 'right',
+                width: '400px',
+                buttons: [
+                    { text: 'Reset', action: () => true },
+                    {
+                        text: 'Apply',
+                        primary: true,
+                        action: () => {
+                            GUI.toast.success('Applied');
+                            return true;
+                        }
+                    }
+                ]
+            });
+        };
+        $('btn-brand-theme').onclick = () => registerAndApplyBrandTheme();
+
+        // Toasts
+        $('btn-toast-basic').onclick = () => GUI.toast('Basic toast');
+        $('btn-toast-success').onclick = () => GUI.toast.success('Success message');
+        $('btn-toast-error').onclick = () => GUI.toast.error('Error message');
+        $('btn-toast-warning').onclick = () => GUI.toast.warning('Warning message');
+        $('btn-toast-info').onclick = () => GUI.toast.info('Info message');
+        $('btn-toast-persistent').onclick = () => GUI.toast('Persistent toast', { duration: 0 });
+        $('btn-toast-no-close').onclick = () => GUI.toast('No close button', { closable: false });
+        $('btn-toast-onclick').onclick = () => GUI.toast('Click me!', { onClick: () => alert('Clicked!') });
+        $('btn-toast-grow').onclick = () => GUI.toast('Grow progress', { progressType: 'grow' });
+        $('btn-toast-copy').onclick = () => GUI.toast('Click to copy this message', { copyOnClick: true });
+        $('btn-toast-action').onclick = () => GUI.toast('Message with action', { action: { text: 'Undo', onClick: () => GUI.toast('Undone!') } });
+        $('btn-toast-promise-ok').onclick = () => GUI.toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), { loading: 'Processing...', success: 'Done!' });
+        $('btn-toast-promise-fail').onclick = () => GUI.toast.promise(new Promise((_, reject) => setTimeout(reject, 2000)), { loading: 'Processing...', error: 'Failed!' });
+        $('btn-toast-dismiss').onclick = () => GUI.toast.dismissAll();
+
+        // Config & theme
+        $('btn-position-top-left').onclick = () => GUI.toast.config({ position: 'top-left' });
+        $('btn-position-bottom-right').onclick = () => GUI.toast.config({ position: 'bottom-right' });
+        $('btn-theme-dark').onclick = () => GUI.toast.config({ theme: 'dark' });
+        $('btn-theme-light').onclick = () => GUI.toast.config({ theme: 'light' });
+        $('btn-duration-1s').onclick = () => GUI.toast.config({ duration: 1000 });
+        $('btn-max-3').onclick = () => GUI.toast.config({ maxVisible: 3 });
+        $('btn-max-2').onclick = () => GUI.toast.config({ maxVisible: 2 });
+
+        // Modals
+        $('btn-modal-alert').onclick = () => GUI.modal.alert('This is an alert message');
+        $('btn-modal-alert-title').onclick = () => GUI.modal.alert('This is an alert with title', 'My Title');
+        $('btn-modal-confirm').onclick = () => GUI.modal.confirm('Are you sure?').then(result => GUI.toast(result ? 'Confirmed' : 'Cancelled'));
+        $('btn-modal-confirm-title').onclick = () => GUI.modal.confirm('Delete this item?', 'Confirm Delete').then(result => GUI.toast(result ? 'Deleted' : 'Cancelled'));
+        $('btn-modal-prompt').onclick = () => GUI.modal.prompt('Enter your name:').then(result => GUI.toast(result ? 'Hello ' + result : 'Cancelled'));
+        $('btn-modal-prompt-default').onclick = () => GUI.modal.prompt('Enter your age:', '25').then(result => GUI.toast(result ? 'Age: ' + result : 'Cancelled'));
+        $('btn-modal-custom').onclick = () => GUI.modal.show({ title: 'Custom Modal', content: 'This is custom content with <strong>HTML</strong>.', allowHTML: true, buttons: [{ text: 'Close', action: () => {}, primary: true }] });
+        $('btn-modal-multi').onclick = () => GUI.modal.show({ title: 'Modal with Buttons', content: 'Choose an option:', buttons: [{ text: 'Option 1', action: () => GUI.toast('Option 1 selected') }, { text: 'Option 2', action: () => GUI.toast('Option 2 selected'), primary: true }] });
+        $('btn-modal-form-select').onclick = () => GUI.modal.show({ title: 'Form with Select', form: [{ label: 'Choose', name: 'choice', type: 'select', options: [{ label: 'Option 1', value: '1' }, { label: 'Option 2', value: '2' }] }], buttons: [{ text: 'Submit', primary: true }] }).then(data => GUI.toast(data ? 'Selected: ' + data.choice : 'Cancelled'));
+        $('btn-modal-form-checkbox').onclick = () => GUI.modal.show({ title: 'Form with Checkbox', form: [{ label: 'Agree', name: 'agree', type: 'checkbox', checked: false }], buttons: [{ text: 'Submit', primary: true }] }).then(data => GUI.toast(data ? 'Agreed: ' + data.agree : 'Cancelled'));
+        $('btn-modal-nested').onclick = () => openNestedModals();
+
+        // Security (XSS)
+        $('btn-unsafe-toast').onclick = () => GUI.toast('<img src=x onerror=alert(1)>');
+        $('btn-safe-html-toast').onclick = () => GUI.toast('<img src=x onerror=alert(1)>', { allowHTML: true });
+        $('btn-unsafe-modal-alert').onclick = () => GUI.modal.alert('<img src=x onerror=alert(1)>');
+        $('btn-safe-modal-html').onclick = () => GUI.modal.show({ title: 'XSS Modal', content: '<img src=x onerror=alert(1)>', allowHTML: true, buttons: [{ text: 'OK' }] });
+        $('btn-unsafe-modal-title').onclick = () => GUI.modal.show({ title: '<img src=x onerror=alert(1)>', content: 'Test XSS in title' });
     </script>
-    <script src="gui.js"></script>
 </body>
 </html>
